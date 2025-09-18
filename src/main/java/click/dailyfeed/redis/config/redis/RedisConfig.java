@@ -1,7 +1,10 @@
 package click.dailyfeed.redis.config.redis;
 
+import click.dailyfeed.code.domain.content.comment.dto.CommentDto;
+import click.dailyfeed.code.domain.content.post.dto.PostDto;
 import click.dailyfeed.code.domain.member.member.dto.MemberDto;
-import click.dailyfeed.code.global.cache.CacheKeyConstant;
+import click.dailyfeed.code.domain.timeline.timeline.dto.TimelineDto;
+import click.dailyfeed.code.global.cache.RedisKeyConstant;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -40,6 +43,40 @@ public class RedisConfig {
         return new LettuceConnectionFactory(configuration);
     }
 
+    @Bean // 1m
+    public CacheManager redisCacheManager(
+            RedisConnectionFactory redisConnectionFactory,
+            @Qualifier("jsonRedisSerializer") GenericJackson2JsonRedisSerializer jsonRedisSerializer
+    ) {
+        RedisCacheConfiguration config = RedisCacheConfiguration.defaultCacheConfig()
+                .entryTtl(Duration.ofMinutes(1))
+//                .prefixCacheNameWith("myapp:")  // 키 접두사
+                .disableCachingNullValues()     // null 값 캐싱 비활성화
+                .serializeKeysWith(RedisSerializationContext.SerializationPair
+                        .fromSerializer(new StringRedisSerializer()))
+                .serializeValuesWith(RedisSerializationContext.SerializationPair
+                        .fromSerializer(jsonRedisSerializer));
+
+        Map<String, RedisCacheConfiguration> cacheConfigurations = new HashMap<>();
+
+        RedisKeyConstant.PostService.GET_ITEM_BY_ID_CACHE_LIST.forEach(key -> cacheConfigurations.put(key, config.entryTtl(Duration.ofMinutes(5))));
+        RedisKeyConstant.PostService.GET_PAGE_CACHE_LIST.forEach(key -> cacheConfigurations.put(key, config.entryTtl(Duration.ofMinutes(10))));
+        RedisKeyConstant.PostService.STATISTICS_CACHE_LIST.forEach(key -> cacheConfigurations.put(key, config.entryTtl(Duration.ofMinutes(15))));
+        RedisKeyConstant.PostService.SEARCH_CHACHE_LIST.forEach(key -> cacheConfigurations.put(key, config.entryTtl(Duration.ofMinutes(20))));
+
+        return RedisCacheManager.builder(redisConnectionFactory)
+                .cacheDefaults(config)
+                .transactionAware()  // 트랜잭션 지원
+                .build();
+    }
+
+    @Bean
+    public GenericJackson2JsonRedisSerializer jsonRedisSerializer(
+            @Qualifier("redisObjectMapper") ObjectMapper redisObjectMapper
+    ) {
+        return new GenericJackson2JsonRedisSerializer(redisObjectMapper);
+    }
+
     @Bean
     RedisTemplate<String, MemberDto.Member> memberDtoRedisTemplate(
             RedisConnectionFactory redisConnectionFactory,
@@ -65,38 +102,128 @@ public class RedisConfig {
         return template;
     }
 
-    @Bean // 1m
-    public CacheManager redisCacheManager(
+    @Bean
+    RedisTemplate<String, CommentDto.CommentActivityEvent>  commentActivityEventRedisTemplate(
             RedisConnectionFactory redisConnectionFactory,
-            @Qualifier("jsonRedisSerializer") GenericJackson2JsonRedisSerializer jsonRedisSerializer
-    ) {
-        RedisCacheConfiguration config = RedisCacheConfiguration.defaultCacheConfig()
-                .entryTtl(Duration.ofMinutes(1))
-//                .prefixCacheNameWith("myapp:")  // 키 접두사
-                .disableCachingNullValues()     // null 값 캐싱 비활성화
-                .serializeKeysWith(RedisSerializationContext.SerializationPair
-                        .fromSerializer(new StringRedisSerializer()))
-                .serializeValuesWith(RedisSerializationContext.SerializationPair
-                        .fromSerializer(jsonRedisSerializer));
+            @Qualifier("redisObjectMapper") ObjectMapper redisCommonObjectMapper
+    ){
+        RedisTemplate<String, CommentDto.CommentActivityEvent> template = new RedisTemplate<>();
+        template.setConnectionFactory(redisConnectionFactory);
 
-        Map<String, RedisCacheConfiguration> cacheConfigurations = new HashMap<>();
+        // Jackson2JsonRedisSerializer 설정
+        Jackson2JsonRedisSerializer<PostDto.PostActivityEvent> jackson2JsonRedisSerializer =
+                new Jackson2JsonRedisSerializer<>(
+                        redisCommonObjectMapper,
+                        PostDto.PostActivityEvent.class
+                );
 
-        CacheKeyConstant.PostService.GET_ITEM_BY_ID_CACHE_LIST.forEach(key -> cacheConfigurations.put(key, config.entryTtl(Duration.ofMinutes(5))));
-        CacheKeyConstant.PostService.GET_PAGE_CACHE_LIST.forEach(key -> cacheConfigurations.put(key, config.entryTtl(Duration.ofMinutes(10))));
-        CacheKeyConstant.PostService.STATISTICS_CACHE_LIST.forEach(key -> cacheConfigurations.put(key, config.entryTtl(Duration.ofMinutes(15))));
-        CacheKeyConstant.PostService.SEARCH_CHACHE_LIST.forEach(key -> cacheConfigurations.put(key, config.entryTtl(Duration.ofMinutes(20))));
+        // Key는 String으로, Value는 JSON으로 직렬화
+        template.setKeySerializer(new StringRedisSerializer());
+        template.setValueSerializer(jackson2JsonRedisSerializer);
+        template.setHashKeySerializer(new StringRedisSerializer());
+        template.setHashValueSerializer(jackson2JsonRedisSerializer);
 
-        return RedisCacheManager.builder(redisConnectionFactory)
-                .cacheDefaults(config)
-                .transactionAware()  // 트랜잭션 지원
-                .build();
+        template.afterPropertiesSet();
+        return template;
     }
 
     @Bean
-    public GenericJackson2JsonRedisSerializer jsonRedisSerializer(
-            @Qualifier("redisObjectMapper") ObjectMapper redisObjectMapper
-    ) {
-        return new GenericJackson2JsonRedisSerializer(redisObjectMapper);
+    RedisTemplate<String, TimelineDto.TimelinePostActivity> timelinePostActivityRedisTemplate(
+            RedisConnectionFactory redisConnectionFactory,
+            @Qualifier("redisObjectMapper") ObjectMapper commonObjectMapper
+    ){
+        RedisTemplate<String, TimelineDto.TimelinePostActivity> template = new RedisTemplate<>();
+        template.setConnectionFactory(redisConnectionFactory);
+
+        // Jackson2JsonRedisSerializer 설정
+        Jackson2JsonRedisSerializer<TimelineDto.TimelinePostActivity> jackson2JsonRedisSerializer =
+                new Jackson2JsonRedisSerializer<>(
+                        commonObjectMapper,
+                        TimelineDto.TimelinePostActivity.class
+                );
+
+        // Key는 String으로, Value는 JSON으로 직렬화
+        template.setKeySerializer(new StringRedisSerializer());
+        template.setValueSerializer(jackson2JsonRedisSerializer);
+        template.setHashKeySerializer(new StringRedisSerializer());
+        template.setHashValueSerializer(jackson2JsonRedisSerializer);
+
+        template.afterPropertiesSet();
+        return template;
     }
-    
+
+    @Bean
+    RedisTemplate<String, PostDto.LikeActivityEvent>  postLikeActivityEventRedisTemplate(
+            RedisConnectionFactory redisConnectionFactory,
+            @Qualifier("redisObjectMapper") ObjectMapper redisCommonObjectMapper
+    ){
+        RedisTemplate<String, PostDto.LikeActivityEvent> template = new RedisTemplate<>();
+        template.setConnectionFactory(redisConnectionFactory);
+
+        // Jackson2JsonRedisSerializer 설정
+        Jackson2JsonRedisSerializer<PostDto.LikeActivityEvent> jackson2JsonRedisSerializer =
+                new Jackson2JsonRedisSerializer<>(
+                        redisCommonObjectMapper,
+                        PostDto.LikeActivityEvent.class
+                );
+
+        // Key는 String으로, Value는 JSON으로 직렬화
+        template.setKeySerializer(new StringRedisSerializer());
+        template.setValueSerializer(jackson2JsonRedisSerializer);
+        template.setHashKeySerializer(new StringRedisSerializer());
+        template.setHashValueSerializer(jackson2JsonRedisSerializer);
+
+        template.afterPropertiesSet();
+        return template;
+    }
+
+    @Bean
+    RedisTemplate<String, CommentDto.LikeActivityEvent>  commentLikeActivityEventRedisTemplate(
+            RedisConnectionFactory redisConnectionFactory,
+            @Qualifier("redisObjectMapper") ObjectMapper redisCommonObjectMapper
+    ){
+        RedisTemplate<String, CommentDto.LikeActivityEvent> template = new RedisTemplate<>();
+        template.setConnectionFactory(redisConnectionFactory);
+
+        // Jackson2JsonRedisSerializer 설정
+        Jackson2JsonRedisSerializer<CommentDto.LikeActivityEvent> jackson2JsonRedisSerializer =
+                new Jackson2JsonRedisSerializer<>(
+                        redisCommonObjectMapper,
+                        CommentDto.LikeActivityEvent.class
+                );
+
+        // Key는 String으로, Value는 JSON으로 직렬화
+        template.setKeySerializer(new StringRedisSerializer());
+        template.setValueSerializer(jackson2JsonRedisSerializer);
+        template.setHashKeySerializer(new StringRedisSerializer());
+        template.setHashValueSerializer(jackson2JsonRedisSerializer);
+
+        template.afterPropertiesSet();
+        return template;
+    }
+
+    @Bean
+    RedisTemplate<String, PostDto.PostActivityEvent>  postActivityEventRedisTemplate(
+            RedisConnectionFactory redisConnectionFactory,
+            @Qualifier("redisObjectMapper") ObjectMapper postActivityEventObjectMapper
+    ){
+        RedisTemplate<String, PostDto.PostActivityEvent> template = new RedisTemplate<>();
+        template.setConnectionFactory(redisConnectionFactory);
+
+        // Jackson2JsonRedisSerializer 설정
+        Jackson2JsonRedisSerializer<PostDto.PostActivityEvent> jackson2JsonRedisSerializer =
+                new Jackson2JsonRedisSerializer<>(
+                        postActivityEventObjectMapper,
+                        PostDto.PostActivityEvent.class
+                );
+
+        // Key는 String으로, Value는 JSON으로 직렬화
+        template.setKeySerializer(new StringRedisSerializer());
+        template.setValueSerializer(jackson2JsonRedisSerializer);
+        template.setHashKeySerializer(new StringRedisSerializer());
+        template.setHashValueSerializer(jackson2JsonRedisSerializer);
+
+        template.afterPropertiesSet();
+        return template;
+    }
 }
