@@ -81,10 +81,21 @@ public class RedisConfig {
 
         Map<String, RedisCacheConfiguration> cacheConfigurations = new HashMap<>();
 
-        RedisKeyConstant.PostService.GET_ITEM_BY_ID_CACHE_LIST.forEach(key -> cacheConfigurations.put(key, config.entryTtl(Duration.ofMinutes(5))));
-        RedisKeyConstant.PostService.GET_PAGE_CACHE_LIST.forEach(key -> cacheConfigurations.put(key, config.entryTtl(Duration.ofMinutes(10))));
-        RedisKeyConstant.PostService.STATISTICS_CACHE_LIST.forEach(key -> cacheConfigurations.put(key, config.entryTtl(Duration.ofMinutes(15))));
-        RedisKeyConstant.PostService.SEARCH_CHACHE_LIST.forEach(key -> cacheConfigurations.put(key, config.entryTtl(Duration.ofMinutes(20))));
+        /// post service
+        RedisKeyConstant.PostService.INTERNAL_QUERY_LIST_BY_IDS_IN.forEach(key -> cacheConfigurations.put(key, config.entryTtl(Duration.ofSeconds(5))));
+        RedisKeyConstant.PostService.GET_ITEM_BY_ID_CACHE_LIST.forEach(key -> cacheConfigurations.put(key, config.entryTtl(Duration.ofSeconds(10))));
+        RedisKeyConstant.PostService.GET_PAGE_CACHE_LIST.forEach(key -> cacheConfigurations.put(key, config.entryTtl(Duration.ofSeconds(20))));
+        RedisKeyConstant.PostService.STATISTICS_CACHE_LIST.forEach(key -> cacheConfigurations.put(key, config.entryTtl(Duration.ofSeconds(30))));
+        RedisKeyConstant.PostService.SEARCH_CHACHE_LIST.forEach(key -> cacheConfigurations.put(key, config.entryTtl(Duration.ofMinutes(1))));
+        /// member redis service
+        RedisKeyConstant.MemberRedisService.INTERNAL_QUERY_LIST_BY_IDS_IN_KEYS.forEach(key -> cacheConfigurations.put(key, config.entryTtl(Duration.ofSeconds(5))));
+        RedisKeyConstant.MemberRedisService.GET_ITEM_BY_ID_CACHE_KEYS.forEach(key -> cacheConfigurations.put(key, config.entryTtl(Duration.ofSeconds(10))));
+        /// follow redis service
+        RedisKeyConstant.FollowRedisService.INTERNAL_QUERY_LIST_BY_IDS_IN_KEYS.forEach(key -> cacheConfigurations.put(key, config.entryTtl(Duration.ofSeconds(5))));
+        RedisKeyConstant.FollowRedisService.GET_PAGE_CACHE_KEYS.forEach(key -> cacheConfigurations.put(key, config.entryTtl(Duration.ofSeconds(20))));
+        RedisKeyConstant.FollowRedisService.GET_ITEM_BY_ID_CACHE_KEYS.forEach(key -> cacheConfigurations.put(key, config.entryTtl(Duration.ofSeconds(10))));
+        /// timeline pull service
+        RedisKeyConstant.TimelinePullService.GET_PAGE_CACHE_LIST.forEach(key -> cacheConfigurations.put(key, config.entryTtl(Duration.ofSeconds(90))));
 
         return RedisCacheManager.builder(redisConnectionFactory)
                 .cacheDefaults(config)
