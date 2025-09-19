@@ -90,11 +90,9 @@ public class RedisConfig {
         /// comment service
         RedisKeyConstant.CommentService.GET_ITEM_BY_ID_KEYS.forEach(key -> cacheConfigurations.put(key, config.entryTtl(Duration.ofMinutes(3))));
         RedisKeyConstant.CommentService.GET_PAGE_KEYS.forEach(key -> cacheConfigurations.put(key, config.entryTtl(Duration.ofMinutes(20))));
-
-
         /// member redis service
         RedisKeyConstant.MemberRedisService.INTERNAL_QUERY_LIST_BY_IDS_IN_KEYS.forEach(key -> cacheConfigurations.put(key, config.entryTtl(Duration.ofSeconds(5))));
-        RedisKeyConstant.MemberRedisService.GET_ITEM_BY_ID_CACHE_KEYS.forEach(key -> cacheConfigurations.put(key, config.entryTtl(Duration.ofSeconds(3))));
+        RedisKeyConstant.MemberRedisService.GET_ITEM_BY_ID_KEYS.forEach(key -> cacheConfigurations.put(key, config.entryTtl(Duration.ofSeconds(10))));
         /// follow redis service
         RedisKeyConstant.FollowRedisService.INTERNAL_QUERY_LIST_BY_IDS_IN_KEYS.forEach(key -> cacheConfigurations.put(key, config.entryTtl(Duration.ofSeconds(5))));
         RedisKeyConstant.FollowRedisService.GET_PAGE_CACHE_KEYS.forEach(key -> cacheConfigurations.put(key, config.entryTtl(Duration.ofSeconds(20))));
