@@ -1,7 +1,7 @@
 package click.dailyfeed.redis.config.redis;
 
 import click.dailyfeed.code.domain.member.member.dto.MemberDto;
-import click.dailyfeed.code.global.cache.CacheKeyConstant;
+import click.dailyfeed.code.global.cache.RedisKeyConstant;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -81,10 +81,10 @@ public class RedisConfig {
 
         Map<String, RedisCacheConfiguration> cacheConfigurations = new HashMap<>();
 
-        CacheKeyConstant.PostService.GET_ITEM_BY_ID_CACHE_LIST.forEach(key -> cacheConfigurations.put(key, config.entryTtl(Duration.ofMinutes(5))));
-        CacheKeyConstant.PostService.GET_PAGE_CACHE_LIST.forEach(key -> cacheConfigurations.put(key, config.entryTtl(Duration.ofMinutes(10))));
-        CacheKeyConstant.PostService.STATISTICS_CACHE_LIST.forEach(key -> cacheConfigurations.put(key, config.entryTtl(Duration.ofMinutes(15))));
-        CacheKeyConstant.PostService.SEARCH_CHACHE_LIST.forEach(key -> cacheConfigurations.put(key, config.entryTtl(Duration.ofMinutes(20))));
+        RedisKeyConstant.PostService.GET_ITEM_BY_ID_CACHE_LIST.forEach(key -> cacheConfigurations.put(key, config.entryTtl(Duration.ofMinutes(5))));
+        RedisKeyConstant.PostService.GET_PAGE_CACHE_LIST.forEach(key -> cacheConfigurations.put(key, config.entryTtl(Duration.ofMinutes(10))));
+        RedisKeyConstant.PostService.STATISTICS_CACHE_LIST.forEach(key -> cacheConfigurations.put(key, config.entryTtl(Duration.ofMinutes(15))));
+        RedisKeyConstant.PostService.SEARCH_CHACHE_LIST.forEach(key -> cacheConfigurations.put(key, config.entryTtl(Duration.ofMinutes(20))));
 
         return RedisCacheManager.builder(redisConnectionFactory)
                 .cacheDefaults(config)
