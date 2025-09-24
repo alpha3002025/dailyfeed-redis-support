@@ -117,6 +117,31 @@ public class RedisConfig {
     }
 
     @Bean
+    RedisTemplate<String, PostDto.Post>  postDtoPostRedisTemplate(
+            RedisConnectionFactory redisConnectionFactory,
+            @Qualifier("redisObjectMapper") ObjectMapper postActivityEventObjectMapper
+    ){
+        RedisTemplate<String, PostDto.Post> template = new RedisTemplate<>();
+        template.setConnectionFactory(redisConnectionFactory);
+
+        // Jackson2JsonRedisSerializer 설정
+        Jackson2JsonRedisSerializer<PostDto.Post> jackson2JsonRedisSerializer =
+                new Jackson2JsonRedisSerializer<>(
+                        postActivityEventObjectMapper,
+                        PostDto.Post.class
+                );
+
+        // Key는 String으로, Value는 JSON으로 직렬화
+        template.setKeySerializer(new StringRedisSerializer());
+        template.setValueSerializer(jackson2JsonRedisSerializer);
+        template.setHashKeySerializer(new StringRedisSerializer());
+        template.setHashValueSerializer(jackson2JsonRedisSerializer);
+
+        template.afterPropertiesSet();
+        return template;
+    }
+
+    @Bean
     RedisTemplate<String, CommentDto.CommentActivityEvent>  commentActivityEventRedisTemplate(
             RedisConnectionFactory redisConnectionFactory,
             @Qualifier("redisObjectMapper") ObjectMapper redisCommonObjectMapper
