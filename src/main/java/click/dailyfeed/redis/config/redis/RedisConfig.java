@@ -63,7 +63,6 @@ public class RedisConfig {
         RedisKeyConstant.PostService.INTERNAL_QUERY_LIST_BY_IDS_IN_KEYS.forEach(key -> cacheConfigurations.put(key, config.entryTtl(Duration.ofSeconds(5))));
         RedisKeyConstant.PostService.GET_ITEM_BY_ID_KEYS.forEach(key -> cacheConfigurations.put(key, config.entryTtl(Duration.ofSeconds(3))));
         RedisKeyConstant.PostService.GET_PAGE_KEYS.forEach(key -> cacheConfigurations.put(key, config.entryTtl(Duration.ofSeconds(20))));
-        RedisKeyConstant.PostService.STATISTICS_KEYS.forEach(key -> cacheConfigurations.put(key, config.entryTtl(Duration.ofSeconds(30))));
         RedisKeyConstant.PostService.SEARCH_KEYS.forEach(key -> cacheConfigurations.put(key, config.entryTtl(Duration.ofMinutes(1))));
         /// comment service
         RedisKeyConstant.CommentService.GET_ITEM_BY_ID_KEYS.forEach(key -> cacheConfigurations.put(key, config.entryTtl(Duration.ofMinutes(3))));
@@ -77,6 +76,7 @@ public class RedisConfig {
         RedisKeyConstant.FollowRedisService.GET_ITEM_BY_ID_KEYS.forEach(key -> cacheConfigurations.put(key, config.entryTtl(Duration.ofSeconds(3))));
         /// timeline pull service
         RedisKeyConstant.TimelinePullService.GET_PAGE_KEYS.forEach(key -> cacheConfigurations.put(key, config.entryTtl(Duration.ofSeconds(90))));
+        RedisKeyConstant.TimelinePullService.SEARCH_KEYS.forEach(key -> cacheConfigurations.put(key, config.entryTtl(Duration.ofSeconds(90))));
 
         return RedisCacheManager.builder(redisConnectionFactory)
                 .cacheDefaults(config)
