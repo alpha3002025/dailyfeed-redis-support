@@ -3,6 +3,7 @@ package click.dailyfeed.redis.config.redis;
 import click.dailyfeed.code.domain.content.comment.dto.CommentDto;
 import click.dailyfeed.code.domain.content.post.dto.PostDto;
 import click.dailyfeed.code.domain.member.member.dto.MemberDto;
+import click.dailyfeed.code.domain.activity.transport.MemberActivityTransportDto;
 import click.dailyfeed.code.domain.timeline.timeline.dto.TimelineDto;
 import click.dailyfeed.code.global.cache.RedisKeyConstant;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -142,6 +143,32 @@ public class RedisConfig {
     }
 
     @Bean
+    public RedisTemplate<String, MemberActivityTransportDto.MemberActivityEvent> memberActivityTransportDtoRedisTemplate(
+            RedisConnectionFactory redisConnectionFactory,
+            @Qualifier("redisObjectMapper") ObjectMapper redisCommonObjectMapper
+    ){
+        RedisTemplate<String, MemberActivityTransportDto.MemberActivityEvent> template = new RedisTemplate<>();
+        template.setConnectionFactory(redisConnectionFactory);
+
+        // Jackson2JsonRedisSerializer 설정
+        Jackson2JsonRedisSerializer<MemberActivityTransportDto.MemberActivityEvent> jackson2JsonRedisSerializer =
+                new Jackson2JsonRedisSerializer<>(
+                        redisCommonObjectMapper,
+                        MemberActivityTransportDto.MemberActivityEvent.class
+                );
+
+        // Key는 String으로, Value는 JSON으로 직렬화
+        template.setKeySerializer(new StringRedisSerializer());
+        template.setValueSerializer(jackson2JsonRedisSerializer);
+        template.setHashKeySerializer(new StringRedisSerializer());
+        template.setHashValueSerializer(jackson2JsonRedisSerializer);
+
+        template.afterPropertiesSet();
+        return template;
+    }
+
+    /// 기능 완료 후 삭제 예정 (start) /// 🏎️🏎️🏎️
+    @Bean
     RedisTemplate<String, CommentDto.CommentActivityEvent>  commentActivityEventRedisTemplate(
             RedisConnectionFactory redisConnectionFactory,
             @Qualifier("redisObjectMapper") ObjectMapper redisCommonObjectMapper
@@ -265,4 +292,5 @@ public class RedisConfig {
         template.afterPropertiesSet();
         return template;
     }
+    /// 기능 완료 후 삭제 예정 (end) /// 🏎️🏎️🏎️
 }
