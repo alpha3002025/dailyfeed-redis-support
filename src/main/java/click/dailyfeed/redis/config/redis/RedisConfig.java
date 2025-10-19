@@ -174,18 +174,18 @@ public class RedisConfig {
     }
 
     @Bean
-    public RedisTemplate<String, MemberActivityTransportDto.MemberActivityEvent> memberActivityTransportDtoRedisTemplate(
+    public RedisTemplate<String, MemberActivityTransportDto.MemberActivityMessage> memberActivityTransportDtoRedisTemplate(
             RedisConnectionFactory redisConnectionFactory,
             @Qualifier("redisObjectMapper") ObjectMapper redisCommonObjectMapper
     ){
-        RedisTemplate<String, MemberActivityTransportDto.MemberActivityEvent> template = new RedisTemplate<>();
+        RedisTemplate<String, MemberActivityTransportDto.MemberActivityMessage> template = new RedisTemplate<>();
         template.setConnectionFactory(redisConnectionFactory);
 
         // Jackson2JsonRedisSerializer 설정
-        Jackson2JsonRedisSerializer<MemberActivityTransportDto.MemberActivityEvent> jackson2JsonRedisSerializer =
+        Jackson2JsonRedisSerializer<MemberActivityTransportDto.MemberActivityMessage> jackson2JsonRedisSerializer =
                 new Jackson2JsonRedisSerializer<>(
                         redisCommonObjectMapper,
-                        MemberActivityTransportDto.MemberActivityEvent.class
+                        MemberActivityTransportDto.MemberActivityMessage.class
                 );
 
         // Key는 String으로, Value는 JSON으로 직렬화
