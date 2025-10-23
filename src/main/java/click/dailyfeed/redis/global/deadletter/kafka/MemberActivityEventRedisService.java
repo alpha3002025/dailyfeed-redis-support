@@ -15,8 +15,8 @@ import static click.dailyfeed.code.global.cache.RedisKeyPrefix.MEMBER_ACTIVITY_K
 @RequiredArgsConstructor
 @Service
 public class MemberActivityEventRedisService {
-    private final static String redisKey = MEMBER_ACTIVITY_KAFKA_LISTENER.getKeyPrefix().substring(MEMBER_ACTIVITY_KAFKA_LISTENER.getKeyPrefix().length());
-    private final static String redisDLQKey = MEMBER_ACTIVITY_KAFKA_DLQ.getKeyPrefix().substring(MEMBER_ACTIVITY_KAFKA_LISTENER.getKeyPrefix().length());
+    private final static String redisKey = MEMBER_ACTIVITY_KAFKA_LISTENER.getKeyPrefix().substring(0, MEMBER_ACTIVITY_KAFKA_LISTENER.getKeyPrefix().length() - 1);
+    private final static String redisDLQKey = MEMBER_ACTIVITY_KAFKA_DLQ.getKeyPrefix().substring(0, MEMBER_ACTIVITY_KAFKA_DLQ.getKeyPrefix().length() - 1);
 
     @Value("${infrastructure.redis.event-queue.member-activity-event.dead-letter-list-key}")
     private String deadLetterKey;
