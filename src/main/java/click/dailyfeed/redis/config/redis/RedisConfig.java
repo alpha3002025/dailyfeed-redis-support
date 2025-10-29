@@ -3,7 +3,6 @@ package click.dailyfeed.redis.config.redis;
 import click.dailyfeed.code.domain.activity.transport.MemberActivityTransportDto;
 import click.dailyfeed.code.domain.content.post.dto.PostDto;
 import click.dailyfeed.code.domain.member.member.dto.MemberDto;
-import click.dailyfeed.code.global.cache.RedisKeyConstant;
 import click.dailyfeed.code.global.cache.RedisKeyPrefix;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -56,7 +55,6 @@ public class RedisConfig {
     ) {
         RedisCacheConfiguration config = RedisCacheConfiguration.defaultCacheConfig()
                 .entryTtl(Duration.ofMinutes(1))
-//                .prefixCacheNameWith("myapp:")  // 키 접두사
                 .disableCachingNullValues()     // null 값 캐싱 비활성화
                 .serializeKeysWith(RedisSerializationContext.SerializationPair
                         .fromSerializer(new StringRedisSerializer()))
@@ -65,19 +63,12 @@ public class RedisConfig {
 
         Map<String, RedisCacheConfiguration> cacheConfigurations = new HashMap<>();
 
-        /// member redis service
-        RedisKeyConstant.MemberRedisService.INTERNAL_QUERY_LIST_BY_IDS_IN_KEYS.forEach(key -> cacheConfigurations.put(key, config.entryTtl(Duration.ofSeconds(5))));
-        RedisKeyConstant.MemberRedisService.GET_ITEM_BY_ID_KEYS.forEach(key -> cacheConfigurations.put(key, config.entryTtl(Duration.ofSeconds(10))));
+        /// member
+        RedisKeyPrefix.getMemberApiNamespaces().forEach(namespace -> cacheConfigurations.put(namespace, config.entryTtl(Duration.ofSeconds(10))));
+        RedisKeyPrefix.getMemberInternalQueryNamespaces().forEach(namespace -> cacheConfigurations.put(namespace, config.entryTtl(Duration.ofSeconds(5))));
 
-        /// follow redis service
-        RedisKeyConstant.FollowRedisService.INTERNAL_QUERY_LIST_BY_IDS_IN_KEYS.forEach(key -> cacheConfigurations.put(key, config.entryTtl(Duration.ofSeconds(5))));
-        RedisKeyConstant.FollowRedisService.GET_PAGE_KEYS.forEach(key -> cacheConfigurations.put(key, config.entryTtl(Duration.ofSeconds(20))));
-        RedisKeyConstant.FollowRedisService.GET_ITEM_BY_ID_KEYS.forEach(key -> cacheConfigurations.put(key, config.entryTtl(Duration.ofSeconds(3))));
-
-        /// timeline api (timeline:api namespace)
-        RedisKeyPrefix.getTimelineApiNamespaces().forEach(namespace ->
-            cacheConfigurations.put(namespace, config.entryTtl(Duration.ofSeconds(5)))
-        );
+        /// timeline
+        RedisKeyPrefix.getTimelineApiNamespaces().forEach(namespace -> cacheConfigurations.put(namespace, config.entryTtl(Duration.ofSeconds(5))));
 
         return RedisCacheManager.builder(redisConnectionFactory)
                 .cacheDefaults(config)
