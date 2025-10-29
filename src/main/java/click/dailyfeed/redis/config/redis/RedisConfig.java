@@ -3,8 +3,8 @@ package click.dailyfeed.redis.config.redis;
 import click.dailyfeed.code.domain.activity.transport.MemberActivityTransportDto;
 import click.dailyfeed.code.domain.content.post.dto.PostDto;
 import click.dailyfeed.code.domain.member.member.dto.MemberDto;
-import click.dailyfeed.code.domain.timeline.timeline.dto.TimelineDto;
 import click.dailyfeed.code.global.cache.RedisKeyConstant;
+import click.dailyfeed.code.global.cache.RedisKeyPrefix;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -65,27 +65,23 @@ public class RedisConfig {
 
         Map<String, RedisCacheConfiguration> cacheConfigurations = new HashMap<>();
 
-        /// post service
-        RedisKeyConstant.PostService.INTERNAL_QUERY_LIST_BY_IDS_IN_KEYS.forEach(key -> cacheConfigurations.put(key, config.entryTtl(Duration.ofSeconds(5))));
-        RedisKeyConstant.PostService.GET_ITEM_BY_ID_KEYS.forEach(key -> cacheConfigurations.put(key, config.entryTtl(Duration.ofSeconds(3))));
-        RedisKeyConstant.PostService.GET_PAGE_KEYS.forEach(key -> cacheConfigurations.put(key, config.entryTtl(Duration.ofSeconds(20))));
-        RedisKeyConstant.PostService.SEARCH_KEYS.forEach(key -> cacheConfigurations.put(key, config.entryTtl(Duration.ofMinutes(1))));
-        /// comment service
-        RedisKeyConstant.CommentService.GET_ITEM_BY_ID_KEYS.forEach(key -> cacheConfigurations.put(key, config.entryTtl(Duration.ofMinutes(3))));
-        RedisKeyConstant.CommentService.GET_PAGE_KEYS.forEach(key -> cacheConfigurations.put(key, config.entryTtl(Duration.ofMinutes(20))));
         /// member redis service
         RedisKeyConstant.MemberRedisService.INTERNAL_QUERY_LIST_BY_IDS_IN_KEYS.forEach(key -> cacheConfigurations.put(key, config.entryTtl(Duration.ofSeconds(5))));
         RedisKeyConstant.MemberRedisService.GET_ITEM_BY_ID_KEYS.forEach(key -> cacheConfigurations.put(key, config.entryTtl(Duration.ofSeconds(10))));
+
         /// follow redis service
         RedisKeyConstant.FollowRedisService.INTERNAL_QUERY_LIST_BY_IDS_IN_KEYS.forEach(key -> cacheConfigurations.put(key, config.entryTtl(Duration.ofSeconds(5))));
         RedisKeyConstant.FollowRedisService.GET_PAGE_KEYS.forEach(key -> cacheConfigurations.put(key, config.entryTtl(Duration.ofSeconds(20))));
         RedisKeyConstant.FollowRedisService.GET_ITEM_BY_ID_KEYS.forEach(key -> cacheConfigurations.put(key, config.entryTtl(Duration.ofSeconds(3))));
-        /// timeline pull service
-        RedisKeyConstant.TimelinePullService.GET_PAGE_KEYS.forEach(key -> cacheConfigurations.put(key, config.entryTtl(Duration.ofSeconds(90))));
-        RedisKeyConstant.TimelinePullService.SEARCH_KEYS.forEach(key -> cacheConfigurations.put(key, config.entryTtl(Duration.ofSeconds(90))));
+
+        /// timeline api (timeline:api namespace)
+        RedisKeyPrefix.getTimelineApiNamespaces().forEach(namespace ->
+            cacheConfigurations.put(namespace, config.entryTtl(Duration.ofSeconds(5)))
+        );
 
         return RedisCacheManager.builder(redisConnectionFactory)
                 .cacheDefaults(config)
+                .withInitialCacheConfigurations(cacheConfigurations)
                 .transactionAware()  // 트랜잭션 지원
                 .build();
     }
@@ -135,32 +131,6 @@ public class RedisConfig {
                 new Jackson2JsonRedisSerializer<>(
                         postActivityEventObjectMapper,
                         PostDto.Post.class
-                );
-
-        // Key는 String으로, Value는 JSON으로 직렬화
-        template.setKeySerializer(new StringRedisSerializer());
-        template.setValueSerializer(jackson2JsonRedisSerializer);
-        template.setHashKeySerializer(new StringRedisSerializer());
-        template.setHashValueSerializer(jackson2JsonRedisSerializer);
-
-        template.afterPropertiesSet();
-        return template;
-    }
-
-    // 타임라인 중 팔로잉 멤버들의 최근활동 : PostDto 형식으로 전환 (TODO)
-    @Bean
-    public RedisTemplate<String, TimelineDto.TimelinePostActivity> timelinePostActivityRedisTemplate(
-            RedisConnectionFactory redisConnectionFactory,
-            @Qualifier("redisObjectMapper") ObjectMapper redisCommonObjectMapper
-    ){
-        RedisTemplate<String, TimelineDto.TimelinePostActivity> template = new RedisTemplate<>();
-        template.setConnectionFactory(redisConnectionFactory);
-
-        // Jackson2JsonRedisSerializer 설정
-        Jackson2JsonRedisSerializer<TimelineDto.TimelinePostActivity> jackson2JsonRedisSerializer =
-                new Jackson2JsonRedisSerializer<>(
-                        redisCommonObjectMapper,
-                        TimelineDto.TimelinePostActivity.class
                 );
 
         // Key는 String으로, Value는 JSON으로 직렬화
